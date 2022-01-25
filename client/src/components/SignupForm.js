@@ -14,7 +14,16 @@ const SignupForm = () => {
   // set state for alert
   const [showAlert, setShowAlert] = useState(false);
 
-  const[addUser] = useMutation(ADD_USER);
+  // addUser mutation
+  const[addUser, {error}] = useMutation(ADD_USER);
+
+  useEffect(() => {
+    if (error) {
+      setShowAlert(true);
+    } else {
+      setShowAlert(false);
+    }
+  }, [error]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -24,18 +33,22 @@ const SignupForm = () => {
   const handleFormSubmit = async (event) => {
     event.preventDefault();
 
-    // try/catch to handle errors instead of promises
-   try {
-     // addUser mutation - pass in variable data
-     const { data } = await addUser({
-       variables: { ...userFormData }
-     });
-
-     Auth.login(data.addUser.token)
-   } catch(e) {
-     console.error(e);
-     setShowAlert(true);
-   }
+    // check if form has everything (as per react-bootstrap docs)
+    const form = event.currentTarget;
+    if (form.checkValidity() === false) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    // try... catch block
+    try {
+      const { data } = await addUser({
+        variables: { ...userFormData },
+      });
+      console.log(data);
+      Auth.login(data.addUser.token);
+    } catch (err) {
+      console.error(err);
+    }
 
     setUserFormData({
       username: '',
@@ -97,7 +110,6 @@ const SignupForm = () => {
           variant='success'>
           Submit
         </Button>
-        {/* {error && <div>Sign Up failed!</div>} */}
       </Form>
     </>
   );
